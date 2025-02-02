@@ -48,6 +48,16 @@ func TestSearch(t *testing.T) {
 						AddRow(nil, nil, nil, nil, nil, nil))
 			},
 		},
+		{
+			Name:          "Empty ID",
+			Username:      "johndoe2024",
+			ExpectedError: fmt.Errorf("user not found"),
+			MockAct: func() {
+				mock.ExpectQuery(config.SearchQuery).
+					WithArgs("johndoe2024").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
+			},
+		},
 	}
 
 	for _, tt := range test {

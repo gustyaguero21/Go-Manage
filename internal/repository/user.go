@@ -25,6 +25,9 @@ func (ur *UserRepository) Search(searchQuery, username string) (models.User, err
 			return models.User{}, fmt.Errorf("user not found")
 		}
 	}
+	if user.ID == "" {
+		return models.User{}, fmt.Errorf("user not found")
+	}
 
 	return user, nil
 }
