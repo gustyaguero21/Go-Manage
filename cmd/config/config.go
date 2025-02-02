@@ -17,4 +17,11 @@ const (
 
 const (
 	CreateTableQuery = `CREATE TABLE users (id TEXT NOT NULL UNIQUE PRIMARY KEY, name TEXT NOT NULL, surname TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL UNIQUE);`
+	SearchUserQuery  = `SELECT * FROM users WHERE username=?;`
+)
+
+//Repository test queries
+
+const (
+	SearchQuery = `SELECT \* FROM users WHERE username=\?`
 )
