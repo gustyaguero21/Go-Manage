@@ -12,12 +12,16 @@ type UserRepository struct {
 }
 
 func (ur *UserRepository) Exists(existsQuery, username string) bool {
-	var exists bool
-	err := ur.DB.QueryRow(existsQuery, username).Scan(&exists)
-	if err != nil {
+
+	search, searchErr := ur.Search(config.SearchUserQuery, username)
+	if searchErr != nil {
 		return false
 	}
-	return exists
+
+	if search.ID != "" {
+		return true
+	}
+	return false
 }
 
 func (ur *UserRepository) Search(searchQuery, username string) (models.User, error) {

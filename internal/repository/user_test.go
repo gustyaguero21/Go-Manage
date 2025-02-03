@@ -20,34 +20,53 @@ func TestExists(t *testing.T) {
 
 	repo := UserRepository{DB: db}
 
-	test := []struct {
-		Name             string
-		Username         string
-		ExpectedResponse bool
-		MockAct          func()
+	tests := []struct {
+		Name         string
+		Username     string
+		ExpectedBool bool
+		MockAct      func()
 	}{
 		{
-			Name:             "Error",
-			Username:         "johndoe",
-			ExpectedResponse: false,
+			Name:         "Success",
+			Username:     "johndoe",
+			ExpectedBool: true,
 			MockAct: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
-					WithArgs("johndoe2024").
-					WillReturnRows(mock.NewRows([]string{"username"}))
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
+						AddRow(1, "John", "Doe", "johndoe", "johndoe@example.com", "password123"))
+			},
+		},
+		{
+			Name:         "Error",
+			Username:     "johndoe2024",
+			ExpectedBool: false,
+			MockAct: func() {
+			},
+		},
+		{
+			Name:         "User not found",
+			Username:     "nonexistentuser",
+			ExpectedBool: false,
+			MockAct: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("nonexistentuser").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"})) // No filas
 			},
 		},
 	}
 
-	for _, tt := range test {
+	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			tt.MockAct()
 
-			exists := repo.Exists(config.TestExistsQuery, tt.Username)
+			exists := repo.Exists(config.TestSearchQuery, tt.Username)
 
-			assert.Equal(t, tt.ExpectedResponse, exists)
+			assert.Equal(t, tt.ExpectedBool, exists)
 		})
 	}
 }
+
 func TestSearch(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
