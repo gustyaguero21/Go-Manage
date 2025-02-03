@@ -3,6 +3,7 @@ package repository
 import "go-manage/internal/models"
 
 type Repository interface {
+	Exists(existsQuery, username string) bool
 	Search(searchQuery, username string) (models.User, error)
 	Save(saveQuery string, user models.User) (models.User, error)
 }

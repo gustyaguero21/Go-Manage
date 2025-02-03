@@ -11,7 +11,7 @@ type UserRepository struct {
 	DB *sql.DB
 }
 
-func (ur *UserRepository) exists(existsQuery, username string) bool {
+func (ur *UserRepository) Exists(existsQuery, username string) bool {
 	var exists bool
 	err := ur.DB.QueryRow(existsQuery, username).Scan(&exists)
 	if err != nil {

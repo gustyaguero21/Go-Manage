@@ -25,7 +25,7 @@ const (
 //Repository test queries
 
 const (
+	TestExistsQuery = `SELECT EXISTS\(SELECT 1 FROM users WHERE username = \?\);`
 	TestSearchQuery = `SELECT \* FROM users WHERE username=\?`
-	TestExistsQuery = `SELECT COUNT\(\*\) FROM users WHERE username = \?`
 	TestSaveQuery   = "INSERT INTO users"
 )

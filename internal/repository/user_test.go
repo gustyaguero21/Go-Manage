@@ -144,3 +144,41 @@ func TestSave(t *testing.T) {
 		})
 	}
 }
+
+func TestExists(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	repo := UserRepository{DB: db}
+
+	test := []struct {
+		Name             string
+		Username         string
+		ExpectedResponse bool
+		MockAct          func()
+	}{
+		{
+			Name:             "Error",
+			Username:         "johndoe",
+			ExpectedResponse: false,
+			MockAct: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe2024").
+					WillReturnRows(mock.NewRows([]string{"username"}))
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.MockAct()
+
+			exists := repo.Exists(config.TestExistsQuery, tt.Username)
+
+			assert.Equal(t, tt.ExpectedResponse, exists)
+		})
+	}
+}
