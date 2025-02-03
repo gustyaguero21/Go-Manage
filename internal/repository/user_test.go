@@ -3,6 +3,8 @@ package repository
 import (
 	"fmt"
 	"go-manage/cmd/config"
+	"go-manage/internal/models"
+	"log"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -16,9 +18,7 @@ func TestSearch(t *testing.T) {
 	}
 	defer db.Close()
 
-	repo := UserRepository{
-		DB: db,
-	}
+	repo := UserRepository{DB: db}
 
 	test := []struct {
 		Name          string
@@ -31,10 +31,17 @@ func TestSearch(t *testing.T) {
 			Username:      "johndoe2024",
 			ExpectedError: nil,
 			MockAct: func() {
-				mock.ExpectQuery(config.SearchQuery).
+				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe2024").
 					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
 						AddRow(1, "John", "Doe", "johndoe2024", "john@example.com", "password123"))
+			},
+		},
+		{
+			Name:          "Error",
+			Username:      "johndoe2024",
+			ExpectedError: err,
+			MockAct: func() {
 			},
 		},
 		{
@@ -42,7 +49,7 @@ func TestSearch(t *testing.T) {
 			Username:      "johndoe2024",
 			ExpectedError: fmt.Errorf("user not found"),
 			MockAct: func() {
-				mock.ExpectQuery(config.SearchQuery).
+				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe2024").
 					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
 						AddRow(nil, nil, nil, nil, nil, nil))
@@ -53,7 +60,7 @@ func TestSearch(t *testing.T) {
 			Username:      "johndoe2024",
 			ExpectedError: fmt.Errorf("user not found"),
 			MockAct: func() {
-				mock.ExpectQuery(config.SearchQuery).
+				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe2024").
 					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
 			},
@@ -64,7 +71,7 @@ func TestSearch(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			tt.MockAct()
 
-			search, searchErr := repo.Search(config.SearchQuery, tt.Username)
+			search, searchErr := repo.Search(config.TestSearchQuery, tt.Username)
 
 			if tt.ExpectedError != nil {
 				assert.Equal(t, tt.ExpectedError, searchErr)
@@ -72,6 +79,68 @@ func TestSearch(t *testing.T) {
 			if search.ID != "" {
 				assert.Error(t, fmt.Errorf("user not found"))
 			}
+		})
+	}
+}
+
+func TestSave(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	repo := UserRepository{DB: db}
+
+	test := []struct {
+		Name          string
+		User          models.User
+		ExpectedError error
+		MockAct       func()
+	}{
+		{
+			Name: "Success",
+			User: models.User{
+				ID:       "1",
+				Name:     "John",
+				Surname:  "Doe",
+				Username: "johndoe",
+				Email:    "johndoe@example.com",
+				Password: "Password1234",
+			},
+			ExpectedError: nil,
+			MockAct: func() {
+				mock.ExpectExec(config.TestSaveQuery).
+					WithArgs("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			Name: "Error",
+			User: models.User{
+				ID:       "1",
+				Name:     "John",
+				Surname:  "Doe",
+				Username: "johndoe",
+				Email:    "johndoe@example.com",
+				Password: "Password1234",
+			},
+			ExpectedError: err,
+			MockAct: func() {
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.MockAct()
+
+			saveErr := repo.Save(config.TestSaveQuery, tt.User)
+
+			if tt.ExpectedError != nil {
+				assert.Equal(t, tt.ExpectedError, saveErr)
+			}
+
 		})
 	}
 }

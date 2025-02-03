@@ -11,6 +11,15 @@ type UserRepository struct {
 	DB *sql.DB
 }
 
+func (ur *UserRepository) exists(existsQuery, username string) bool {
+	var exists bool
+	err := ur.DB.QueryRow(existsQuery, username).Scan(&exists)
+	if err != nil {
+		return false
+	}
+	return exists
+}
+
 func (ur *UserRepository) Search(searchQuery, username string) (models.User, error) {
 	user := models.User{}
 	rows, err := ur.DB.Query(config.SearchUserQuery, username)
@@ -30,4 +39,12 @@ func (ur *UserRepository) Search(searchQuery, username string) (models.User, err
 	}
 
 	return user, nil
+}
+
+func (ur *UserRepository) Save(saveQuery string, user models.User) error {
+	_, saveErr := ur.DB.Exec(saveQuery, user.ID, user.Name, user.Surname, user.Username, user.Email, user.Password)
+	if saveErr != nil {
+		return saveErr
+	}
+	return nil
 }
