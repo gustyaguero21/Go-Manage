@@ -48,3 +48,11 @@ func (ur *UserRepository) Save(saveQuery string, user models.User) error {
 	}
 	return nil
 }
+
+func (ur *UserRepository) Delete(deleteQuery, username string) error {
+	_, deleteErr := ur.DB.Exec(deleteQuery, username)
+	if deleteErr != nil {
+		return deleteErr
+	}
+	return nil
+}

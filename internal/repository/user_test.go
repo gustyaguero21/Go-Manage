@@ -11,6 +11,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestExists(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	repo := UserRepository{DB: db}
+
+	test := []struct {
+		Name             string
+		Username         string
+		ExpectedResponse bool
+		MockAct          func()
+	}{
+		{
+			Name:             "Error",
+			Username:         "johndoe",
+			ExpectedResponse: false,
+			MockAct: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe2024").
+					WillReturnRows(mock.NewRows([]string{"username"}))
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.MockAct()
+
+			exists := repo.Exists(config.TestExistsQuery, tt.Username)
+
+			assert.Equal(t, tt.ExpectedResponse, exists)
+		})
+	}
+}
 func TestSearch(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -145,29 +182,30 @@ func TestSave(t *testing.T) {
 	}
 }
 
-func TestExists(t *testing.T) {
+func TestDelete(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer db.Close()
 
 	repo := UserRepository{DB: db}
 
 	test := []struct {
-		Name             string
-		Username         string
-		ExpectedResponse bool
-		MockAct          func()
+		Name          string
+		Username      string
+		ExpectedError error
+		MockAct       func()
 	}{
 		{
-			Name:             "Error",
-			Username:         "johndoe",
-			ExpectedResponse: false,
+			Name:          "Error",
+			Username:      "johndoe",
+			ExpectedError: nil,
 			MockAct: func() {
-				mock.ExpectQuery(config.TestSearchQuery).
-					WithArgs("johndoe2024").
-					WillReturnRows(mock.NewRows([]string{"username"}))
+				mock.ExpectExec(config.TestDeleteQuery).
+					WithArgs("johndoe").
+					WillReturnError(nil)
 			},
 		},
 	}
@@ -176,9 +214,11 @@ func TestExists(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			tt.MockAct()
 
-			exists := repo.Exists(config.TestExistsQuery, tt.Username)
+			deleteErr := repo.Delete(config.TestDeleteQuery, tt.Username)
 
-			assert.Equal(t, tt.ExpectedResponse, exists)
+			if tt.ExpectedError != nil {
+				assert.Equal(t, tt.ExpectedError, deleteErr)
+			}
 		})
 	}
 }
