@@ -51,9 +51,14 @@ func (ur *UserRepository) Save(saveQuery string, user models.User) error {
 }
 
 func (ur *UserRepository) Delete(deleteQuery, username string) error {
-	_, deleteErr := ur.DB.Exec(deleteQuery, username)
-	if deleteErr != nil {
-		return deleteErr
+	_, err := ur.DB.Exec(deleteQuery, username)
+	return err
+}
+
+func (ur *UserRepository) Update(updateQuery, username string, user models.User) error {
+	_, updateErr := ur.DB.Exec(updateQuery, user.Name, user.Surname, user.Email, username)
+	if updateErr != nil {
+		return updateErr
 	}
 	return nil
 }

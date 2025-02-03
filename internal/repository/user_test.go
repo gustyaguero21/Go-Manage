@@ -46,12 +46,12 @@ func TestExists(t *testing.T) {
 		},
 		{
 			Name:         "User not found",
-			Username:     "nonexistentuser",
+			Username:     "lala",
 			ExpectedBool: false,
 			MockAct: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
-					WithArgs("nonexistentuser").
-					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"})) // No filas
+					WithArgs("lala").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
 			},
 		},
 	}
@@ -208,13 +208,20 @@ func TestDelete(t *testing.T) {
 		MockAct       func()
 	}{
 		{
-			Name:          "Error",
+			Name:          "Success",
 			Username:      "johndoe",
 			ExpectedError: nil,
 			MockAct: func() {
 				mock.ExpectExec(config.TestDeleteQuery).
 					WithArgs("johndoe").
-					WillReturnError(nil)
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			Name:          "Error",
+			Username:      "johndoe",
+			ExpectedError: err,
+			MockAct: func() {
 			},
 		},
 	}
@@ -227,6 +234,75 @@ func TestDelete(t *testing.T) {
 
 			if tt.ExpectedError != nil {
 				assert.Equal(t, tt.ExpectedError, deleteErr)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	repo := UserRepository{DB: db}
+
+	test := []struct {
+		Name        string
+		Username    string
+		User        models.User
+		ExpectedErr error
+		MockAct     func()
+	}{
+		{
+			Name:     "Success",
+			Username: "johndoe",
+			User: models.User{
+				ID:       "1",
+				Name:     "Johncito",
+				Surname:  "Doecito",
+				Username: "johndoe",
+				Email:    "johndoe2024@example.com",
+				Password: "Password1234",
+			},
+			ExpectedErr: nil,
+			MockAct: func() {
+				mock.ExpectExec(config.TestUpdateQuery).
+					WithArgs("Johncito", "Doecito", "johndoe2024@example.com", "johndoe").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			Name:     "Error",
+			Username: "johndoe",
+			User: models.User{
+				ID:       "1",
+				Name:     "Johncito",
+				Surname:  "Doecito",
+				Username: "johndoe",
+				Email:    "johndoe2024@example.com",
+				Password: "Password1234",
+			},
+			ExpectedErr: fmt.Errorf("error updating user"),
+			MockAct: func() {
+				mock.ExpectExec(config.TestUpdateQuery).
+					WithArgs("Johncito", "Doecito", "johndoe2024@example.com", "johndoe").
+					WillReturnError(fmt.Errorf("error updating user"))
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.MockAct()
+
+			updateErr := repo.Update(config.UpdateUserQuery, tt.Username, tt.User)
+
+			if tt.ExpectedErr != nil {
+				assert.Equal(t, tt.ExpectedErr.Error(), updateErr.Error())
+			} else {
+				assert.NoError(t, updateErr)
 			}
 		})
 	}

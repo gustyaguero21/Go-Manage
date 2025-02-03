@@ -20,7 +20,8 @@ const (
 	ExistsQuery      = `SELECT EXISTS(SELECT 1 FROM users WHERE username = ?);`
 	SearchUserQuery  = `SELECT * FROM users WHERE username=?;`
 	SaveUserQuery    = `INSERT INTO users (id,name,surname,username,email,password) VALUES (?,?,?,?,?,?);`
-	DeleteUserQuery  = `DELETE * FROM users WHERE username=?;`
+	DeleteUserQuery  = `DELETE FROM users WHERE username = ?;`
+	UpdateUserQuery  = `UPDATE users SET name = ?, surname = ?, email = ? WHERE username = ?;`
 )
 
 //Repository test queries
@@ -30,4 +31,5 @@ const (
 	TestSearchQuery = `SELECT \* FROM users WHERE username=\?`
 	TestSaveQuery   = "INSERT INTO users"
 	TestDeleteQuery = `DELETE\s+FROM\s+users\s+WHERE\s+username\s*=\s*\?;`
+	TestUpdateQuery = `UPDATE users SET name = \?, surname = \?, email = \? WHERE username = \?;`
 )
