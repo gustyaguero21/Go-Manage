@@ -9,8 +9,8 @@ import (
 	"go-manage/internal/models"
 	"go-manage/internal/repository"
 
+	"github.com/gustyaguero21/Go-Core/pkg/encrypter"
 	"github.com/gustyaguero21/Go-Core/pkg/validator"
-	"github.com/gustyaguero21/Go-toolkit/pkg/encrypter"
 )
 
 type UserServices struct {
@@ -19,6 +19,9 @@ type UserServices struct {
 }
 
 func (us *UserServices) CreateUser(ctx context.Context, user models.User) (created models.User, err error) {
+	if us.Exists(user.Username) {
+		return models.User{}, errors.New("user already exists")
+	}
 	if checkErr := paramsValidation(user); checkErr != nil {
 		return models.User{}, checkErr
 	}
@@ -35,6 +38,12 @@ func (us *UserServices) CreateUser(ctx context.Context, user models.User) (creat
 	}
 
 	return user, nil
+}
+
+func (us *UserServices) Exists(username string) bool {
+	exists := us.Repo.Exists(config.SearchUserQuery, username)
+
+	return exists
 }
 
 func paramsValidation(user models.User) error {

@@ -6,5 +6,6 @@ import (
 )
 
 type Services interface {
+	Exists(username string) error
 	CreateUser(ctx context.Context, user models.User) (created models.User, err error)
 }

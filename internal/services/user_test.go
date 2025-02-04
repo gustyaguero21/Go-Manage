@@ -128,3 +128,61 @@ func TestCreate(t *testing.T) {
 		})
 	}
 }
+
+func TestExists(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
+	repo := repository.UserRepository{
+		DB: db,
+	}
+	userService := UserServices{
+		DB:   db,
+		Repo: repo,
+	}
+
+	test := []struct {
+		Name     string
+		Username string
+		Expected bool
+		MockAct  func()
+	}{
+		{
+			Name:     "User already exists",
+			Username: "johndoe",
+			Expected: true, // Aquí esperamos que Exists devuelva `true` porque el usuario existe
+			MockAct: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
+						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
+			},
+		},
+		{
+			Name:     "User does not exist",
+			Username: "nonexistentuser",
+			Expected: false, // Aquí esperamos que Exists devuelva `false` porque el usuario no existe
+			MockAct: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("nonexistentuser").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.MockAct()
+
+			// Verificamos si el usuario existe usando el servicio
+			exists := userService.Exists(tt.Username)
+
+			// Comprobamos que el valor de exists sea el esperado
+			assert.Equal(t, tt.Expected, exists)
+		})
+	}
+}
