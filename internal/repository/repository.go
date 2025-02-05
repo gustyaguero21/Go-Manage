@@ -8,4 +8,5 @@ type Repository interface {
 	Save(saveQuery string, user models.User) (models.User, error)
 	Delete(deleteQuery, username string) error
 	Update(updateQuery, username string, user models.User) error
+	ChangePwd(changePwdQuery, username, newPassword string) error
 }
