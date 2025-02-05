@@ -6,7 +6,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gustyaguero21/Go-Core v1.0.1
-	github.com/gustyaguero21/Go-toolkit v1.0.5
 	github.com/stretchr/testify v1.10.0
 )
 

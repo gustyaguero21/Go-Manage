@@ -46,6 +46,30 @@ func (us *UserServices) CreateUser(ctx context.Context, user models.User) (creat
 	return user, nil
 }
 
+func (us *UserServices) SearchUser(ctx context.Context, username string) (search models.User, err error) {
+	search, searchErr := us.Repo.Search(config.SearchUserQuery, username)
+	if searchErr != nil {
+		return models.User{}, errors.New("error searching user. Error: " + searchErr.Error())
+	}
+
+	if search.ID == "" {
+		return models.User{}, errors.New("user not found")
+	}
+
+	return search, nil
+}
+
+func (us *UserServices) DeleteUser(ctx context.Context, username string) (err error) {
+	if !us.Exists(username) {
+		return errors.New("user not found")
+	}
+
+	if deleteErr := us.Repo.Delete(config.DeleteUserQuery, username); deleteErr != nil {
+		return errors.New("error deleting user. Error: " + deleteErr.Error())
+	}
+	return nil
+}
+
 func paramsValidation(user models.User) error {
 	if user.ID == "" || user.Name == "" || user.Surname == "" || user.Username == "" || user.Email == "" || user.Password == "" {
 		return fmt.Errorf("all fields are required")
