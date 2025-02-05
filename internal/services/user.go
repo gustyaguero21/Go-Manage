@@ -70,6 +70,18 @@ func (us *UserServices) DeleteUser(ctx context.Context, username string) (err er
 	return nil
 }
 
+func (us *UserServices) UpdateUser(ctx context.Context, username string, user models.User) (updated models.User, err error) {
+	if !us.Exists(username) {
+		return models.User{}, errors.New("user not found")
+	}
+
+	if updateErr := us.Repo.Update(config.UpdateUserQuery, username, user); updateErr != nil {
+		return models.User{}, errors.New("error updating user. Error: " + updateErr.Error())
+	}
+
+	return user, nil
+}
+
 func paramsValidation(user models.User) error {
 	if user.ID == "" || user.Name == "" || user.Surname == "" || user.Username == "" || user.Email == "" || user.Password == "" {
 		return fmt.Errorf("all fields are required")

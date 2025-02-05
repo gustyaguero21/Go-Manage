@@ -362,3 +362,112 @@ func TestDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdate(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
+	repo := repository.UserRepository{DB: db}
+
+	userService := UserServices{
+		DB:   db,
+		Repo: repo,
+	}
+
+	test := []struct {
+		Name          string
+		Username      string
+		User          models.User
+		ExpectUpdated models.User
+		ExpectedErr   error
+		SearchMock    func()
+		MockAct       func()
+	}{
+		{
+			Name:     "Success",
+			Username: "johndoe",
+			User: models.User{
+				ID:       "1",
+				Name:     "Johncito",
+				Surname:  "Doecito",
+				Username: "johndoe",
+				Email:    "johndoe2024@example.com",
+				Password: "NewPassword1234",
+			},
+			ExpectUpdated: models.User{
+				ID:       "1",
+				Name:     "Johncito",
+				Surname:  "Doecito",
+				Username: "johndoe",
+				Email:    "johndoe2024@example.com",
+				Password: "NewPassword1234",
+			},
+			ExpectedErr: nil,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
+						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
+			},
+			MockAct: func() {
+				mock.ExpectExec(config.TestUpdateQuery).
+					WithArgs("Johncito", "Doecito", "johndoe2024@example.com", "johndoe").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			Name:          "Error",
+			Username:      "johndoe",
+			User:          models.User{},
+			ExpectUpdated: models.User{},
+			ExpectedErr:   err,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
+						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
+			},
+			MockAct: func() {
+			},
+		},
+		{
+			Name:          "User not found",
+			Username:      "johndoe",
+			User:          models.User{},
+			ExpectUpdated: models.User{},
+			ExpectedErr:   errors.New("user not found"),
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
+			},
+			MockAct: func() {
+				mock.ExpectExec(config.TestDeleteQuery).
+					WithArgs("johndoe").
+					WillReturnError(errors.New("user not found"))
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.SearchMock()
+			tt.MockAct()
+
+			updated, updateErr := userService.UpdateUser(ctx, tt.Username, tt.User)
+
+			if tt.ExpectedErr != nil {
+				assert.Equal(t, tt.ExpectedErr, updateErr)
+			}
+
+			if updated.ID != "" {
+				assert.Equal(t, tt.ExpectUpdated.ID, updated.ID)
+			}
+		})
+	}
+}
