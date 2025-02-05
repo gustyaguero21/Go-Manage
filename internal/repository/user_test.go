@@ -307,3 +307,60 @@ func TestUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestChangePwd(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	repo := UserRepository{DB: db}
+
+	test := []struct {
+		Name        string
+		Username    string
+		NewPassword string
+		ExpectedErr error
+		MockAct     func()
+	}{
+		{
+			Name:        "Success",
+			Username:    "johndoe",
+			NewPassword: "NewPassword1234",
+			ExpectedErr: nil,
+			MockAct: func() {
+				mock.ExpectExec(config.TestChangePwdQuery).
+					WithArgs("NewPassword1234", "johndoe").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+			},
+		},
+		{
+			Name:        "Error",
+			Username:    "johndoe",
+			NewPassword: "NewPassword1234",
+			ExpectedErr: fmt.Errorf("error changing user password"),
+			MockAct: func() {
+				mock.ExpectExec(config.TestChangePwdQuery).
+					WithArgs("NewPassword1234", "johndoe").
+					WillReturnError(fmt.Errorf("error changing user password"))
+
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.MockAct()
+
+			changePwd := repo.ChangePwd(config.TestChangePwdQuery, tt.Username, tt.NewPassword)
+
+			if tt.ExpectedErr != nil {
+				assert.Equal(t, tt.ExpectedErr.Error(), changePwd.Error())
+			} else {
+				assert.NoError(t, changePwd)
+			}
+		})
+	}
+}

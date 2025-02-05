@@ -62,3 +62,11 @@ func (ur *UserRepository) Update(updateQuery, username string, user models.User)
 	}
 	return nil
 }
+
+func (ur *UserRepository) ChangePwd(changePwdQuery, username, newPassword string) error {
+	_, changePwdErr := ur.DB.Exec(changePwdQuery, newPassword, username)
+	if changePwdErr != nil {
+		return changePwdErr
+	}
+	return nil
+}

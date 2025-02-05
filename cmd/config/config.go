@@ -16,18 +16,20 @@ const (
 //Database queries
 
 const (
-	CreateTableQuery = `CREATE TABLE users (id TEXT NOT NULL UNIQUE PRIMARY KEY, name TEXT NOT NULL, surname TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL UNIQUE);`
-	SearchUserQuery  = `SELECT * FROM users WHERE username=?;`
-	SaveUserQuery    = `INSERT INTO users (id,name,surname,username,email,password) VALUES (?,?,?,?,?,?);`
-	DeleteUserQuery  = `DELETE FROM users WHERE username = ?;`
-	UpdateUserQuery  = `UPDATE users SET name = ?, surname = ?, email = ? WHERE username = ?;`
+	CreateTableQuery   = `CREATE TABLE users (id TEXT NOT NULL UNIQUE PRIMARY KEY, name TEXT NOT NULL, surname TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL UNIQUE);`
+	SearchUserQuery    = `SELECT * FROM users WHERE username=?;`
+	SaveUserQuery      = `INSERT INTO users (id,name,surname,username,email,password) VALUES (?,?,?,?,?,?);`
+	DeleteUserQuery    = `DELETE FROM users WHERE username = ?;`
+	UpdateUserQuery    = `UPDATE users SET name = ?, surname = ?, email = ? WHERE username = ?;`
+	ChangeUserPwdQuery = `UPDATE users SET password = ? WHERE username = ?;`
 )
 
 //Repository test queries
 
 const (
-	TestSearchQuery = `SELECT \* FROM users WHERE username=\?`
-	TestSaveQuery   = "INSERT INTO users"
-	TestDeleteQuery = `DELETE\s+FROM\s+users\s+WHERE\s+username\s*=\s*\?;`
-	TestUpdateQuery = `UPDATE users SET name = \?, surname = \?, email = \? WHERE username = \?;`
+	TestSearchQuery    = `SELECT \* FROM users WHERE username=\?`
+	TestSaveQuery      = "INSERT INTO users"
+	TestDeleteQuery    = `DELETE\s+FROM\s+users\s+WHERE\s+username\s*=\s*\?;`
+	TestUpdateQuery    = `UPDATE users SET name = \?, surname = \?, email = \? WHERE username = \?;`
+	TestChangePwdQuery = "UPDATE users SET"
 )
