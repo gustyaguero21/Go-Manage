@@ -82,6 +82,18 @@ func (us *UserServices) UpdateUser(ctx context.Context, username string, user mo
 	return user, nil
 }
 
+func (us *UserServices) ChangeUserPwd(ctx context.Context, username string, newPassword string) (err error) {
+	if !us.Exists(username) {
+		return errors.New("user not found")
+	}
+
+	if changePwd := us.Repo.ChangePwd(config.ChangeUserPwdQuery, username, newPassword); changePwd != nil {
+		return errors.New("error changing user password. Error: " + changePwd.Error())
+	}
+
+	return nil
+}
+
 func paramsValidation(user models.User) error {
 	if user.ID == "" || user.Name == "" || user.Surname == "" || user.Username == "" || user.Email == "" || user.Password == "" {
 		return fmt.Errorf("all fields are required")

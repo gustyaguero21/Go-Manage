@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExists(t *testing.T) {
+func TestExistsUser(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		log.Fatal(err)
@@ -70,7 +70,7 @@ func TestExists(t *testing.T) {
 	}
 }
 
-func TestCreate(t *testing.T) {
+func TestCreateUser(t *testing.T) {
 	ctx := context.Background()
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -183,7 +183,7 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-func TestSearch(t *testing.T) {
+func TestSearchuser(t *testing.T) {
 	ctx := context.Background()
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -243,7 +243,7 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
-			Name:     "User does not exist",
+			Name:     "User not found",
 			Username: "nonexistentuser",
 			ExpectedResult: models.User{
 				ID:       "1",
@@ -280,7 +280,7 @@ func TestSearch(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
+func TestDeleteUser(t *testing.T) {
 	ctx := context.Background()
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -363,7 +363,7 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestUpdate(t *testing.T) {
+func TestUpdateUser(t *testing.T) {
 	ctx := context.Background()
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -467,6 +467,89 @@ func TestUpdate(t *testing.T) {
 
 			if updated.ID != "" {
 				assert.Equal(t, tt.ExpectUpdated.ID, updated.ID)
+			}
+		})
+	}
+}
+
+func TestChangeUserPassword(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	repo := repository.UserRepository{DB: db}
+	userService := UserServices{
+		DB:   db,
+		Repo: repo,
+	}
+
+	test := []struct {
+		Name        string
+		Username    string
+		NewPassword string
+		ExpectedErr error
+		SearchMock  func()
+		MockAct     func()
+	}{
+		{
+			Name:        "Success",
+			Username:    "johndoe",
+			NewPassword: "NewPassword1234",
+			ExpectedErr: nil,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
+						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
+			},
+			MockAct: func() {
+				mock.ExpectExec(config.TestChangePwdQuery).
+					WithArgs("NewPassword1234", "johndoe").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			Name:        "Error",
+			Username:    "johndoe",
+			ExpectedErr: err,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
+						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
+			},
+			MockAct: func() {
+
+			},
+		},
+		{
+			Name:        "User not found",
+			Username:    "johndoe",
+			NewPassword: "NewPassword1234",
+			ExpectedErr: errors.New("user not found"),
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("nonexistentuser").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
+			},
+			MockAct: func() {
+
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.SearchMock()
+			tt.MockAct()
+
+			changePwd := userService.ChangeUserPwd(ctx, tt.Username, tt.NewPassword)
+
+			if tt.ExpectedErr != nil {
+				assert.EqualError(t, tt.ExpectedErr, changePwd.Error())
 			}
 		})
 	}
