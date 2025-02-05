@@ -18,6 +18,12 @@ type UserServices struct {
 	Repo repository.UserRepository
 }
 
+func (us *UserServices) Exists(username string) bool {
+	exists := us.Repo.Exists(config.SearchUserQuery, username)
+
+	return exists
+}
+
 func (us *UserServices) CreateUser(ctx context.Context, user models.User) (created models.User, err error) {
 	if us.Exists(user.Username) {
 		return models.User{}, errors.New("user already exists")
@@ -38,12 +44,6 @@ func (us *UserServices) CreateUser(ctx context.Context, user models.User) (creat
 	}
 
 	return user, nil
-}
-
-func (us *UserServices) Exists(username string) bool {
-	exists := us.Repo.Exists(config.SearchUserQuery, username)
-
-	return exists
 }
 
 func paramsValidation(user models.User) error {
