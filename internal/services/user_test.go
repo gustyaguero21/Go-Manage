@@ -176,8 +176,8 @@ func TestCreateUser(t *testing.T) {
 			if tt.ExpectedErr != nil {
 				assert.Equal(t, tt.ExpectedErr, createErr)
 			}
-			if createdUser.ID != "" {
-				assert.Equal(t, tt.User.ID, createdUser.ID)
+			if createdUser.Username != "" {
+				assert.Equal(t, tt.User.Username, createdUser.Username)
 			}
 		})
 	}
