@@ -9,8 +9,9 @@ import (
 	"go-manage/internal/models"
 	"go-manage/internal/repository"
 
-	"github.com/gustyaguero21/Go-Core/pkg/encrypter"
-	"github.com/gustyaguero21/Go-Core/pkg/validator"
+	"github.com/google/uuid"
+	"github.com/gustyaguero21/go-core/pkg/encrypter"
+	"github.com/gustyaguero21/go-core/pkg/validator"
 )
 
 type UserServices struct {
@@ -31,6 +32,8 @@ func (us *UserServices) CreateUser(ctx context.Context, user models.User) (creat
 	if checkErr := paramsValidation(user); checkErr != nil {
 		return models.User{}, checkErr
 	}
+
+	user.ID = uuid.New().String()
 
 	hashedPwd, hashErr := encrypter.PasswordEncrypter(user.Password)
 	if hashErr != nil {
@@ -87,7 +90,12 @@ func (us *UserServices) ChangeUserPwd(ctx context.Context, username string, newP
 		return errors.New("user not found")
 	}
 
-	if changePwd := us.Repo.ChangePwd(config.ChangeUserPwdQuery, username, newPassword); changePwd != nil {
+	hashPwd, hashErr := encrypter.PasswordEncrypter(newPassword)
+	if hashErr != nil {
+		return hashErr
+	}
+
+	if changePwd := us.Repo.ChangePwd(config.ChangeUserPwdQuery, username, string(hashPwd)); changePwd != nil {
 		return errors.New("error changing user password. Error: " + changePwd.Error())
 	}
 
@@ -95,7 +103,7 @@ func (us *UserServices) ChangeUserPwd(ctx context.Context, username string, newP
 }
 
 func paramsValidation(user models.User) error {
-	if user.ID == "" || user.Name == "" || user.Surname == "" || user.Username == "" || user.Email == "" || user.Password == "" {
+	if user.Name == "" || user.Surname == "" || user.Username == "" || user.Email == "" || user.Password == "" {
 		return fmt.Errorf("all fields are required")
 	}
 	if !validator.ValidatePassword(user.Password) {
