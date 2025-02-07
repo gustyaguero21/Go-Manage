@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gustyaguero21/Go-Core/pkg/web"
+	"github.com/gustyaguero21/go-core/pkg/web"
 )
 
 type UserHandler struct {

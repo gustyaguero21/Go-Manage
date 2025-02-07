@@ -10,8 +10,8 @@ import (
 	"go-manage/internal/repository"
 
 	"github.com/google/uuid"
-	"github.com/gustyaguero21/Go-Core/pkg/encrypter"
-	"github.com/gustyaguero21/Go-Core/pkg/validator"
+	"github.com/gustyaguero21/go-core/pkg/encrypter"
+	"github.com/gustyaguero21/go-core/pkg/validator"
 )
 
 type UserServices struct {

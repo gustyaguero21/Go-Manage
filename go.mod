@@ -6,12 +6,12 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.6.0
+	github.com/gustyaguero21/go-core v1.0.0
 	github.com/stretchr/testify v1.10.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gustyaguero21/Go-Core v1.0.2 // direct
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 )
 
