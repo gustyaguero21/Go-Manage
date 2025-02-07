@@ -1,6 +1,6 @@
 package config
 
-//router params
+//Router params
 
 const (
 	Port = ":8080"
@@ -32,4 +32,28 @@ const (
 	TestDeleteQuery    = `DELETE\s+FROM\s+users\s+WHERE\s+username\s*=\s*\?;`
 	TestUpdateQuery    = `UPDATE users SET name = \?, surname = \?, email = \? WHERE username = \?;`
 	TestChangePwdQuery = "UPDATE users SET"
+)
+
+//Errors
+
+const (
+	ErrAllFieldsAreRequired = "all fields are required"
+	ErrInvalidPassword      = "invalid password"
+	ErrInvalidEmail         = "invalid email"
+	ErrUserAlreadyExists    = "user already exists"
+	ErrSaveUser             = "error creating user. Error: "
+	ErrSearchUser           = "error searching user. Error: "
+	ErrUserNotFound         = "user not found"
+	ErrDeleteUser           = "error deleting user. Error: "
+	ErrUpdateUser           = "error updating user. Error: "
+	ErrChangePwd            = "error changing user password. Error: "
+	ErrEmptyQueryParam      = "empty query param"
+)
+
+//Handler messages
+
+const (
+	SuccessStatus = "success"
+	CreateMessage = "user created successfully"
+	SearchMessage = "user found successfully"
 )

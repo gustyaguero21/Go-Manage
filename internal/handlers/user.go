@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"go-manage/cmd/config"
 	"go-manage/internal/models"
 	"go-manage/internal/services"
 	"net/http"
@@ -33,14 +34,14 @@ func (uh *UserHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, created)
+	ctx.JSON(http.StatusOK, userResponse(config.SuccessStatus, config.CreateMessage, created))
 }
 
 func (uh *UserHandler) Search(ctx *gin.Context) {
 	username := ctx.Param("username")
 
 	if username == "" {
-		web.NewError(ctx, http.StatusBadRequest, "empty query param")
+		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam)
 		return
 	}
 
@@ -51,10 +52,18 @@ func (uh *UserHandler) Search(ctx *gin.Context) {
 	}
 
 	if search.ID == "" {
-		web.NewError(ctx, http.StatusOK, "user not found")
+		web.NewError(ctx, http.StatusOK, config.ErrUserNotFound)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, search)
+	ctx.JSON(http.StatusOK, userResponse(config.SuccessStatus, config.SearchMessage, search))
 
+}
+
+func userResponse(status string, message string, user models.User) models.UserResponse {
+	return models.UserResponse{
+		Status:  status,
+		Message: message,
+		User:    user,
+	}
 }

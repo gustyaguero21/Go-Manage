@@ -43,7 +43,7 @@ func (us *UserServices) CreateUser(ctx context.Context, user models.User) (creat
 	user.Password = string(hashedPwd)
 
 	if createErr := us.Repo.Save(config.SaveUserQuery, user); createErr != nil {
-		return models.User{}, errors.New("error creating user. Error: " + createErr.Error())
+		return models.User{}, errors.New(config.ErrSaveUser + createErr.Error())
 	}
 
 	return user, nil
@@ -52,7 +52,7 @@ func (us *UserServices) CreateUser(ctx context.Context, user models.User) (creat
 func (us *UserServices) SearchUser(ctx context.Context, username string) (search models.User, err error) {
 	search, searchErr := us.Repo.Search(config.SearchUserQuery, username)
 	if searchErr != nil {
-		return models.User{}, errors.New("error searching user. Error: " + searchErr.Error())
+		return models.User{}, errors.New(config.ErrSearchUser + searchErr.Error())
 	}
 
 	return search, nil
@@ -60,22 +60,22 @@ func (us *UserServices) SearchUser(ctx context.Context, username string) (search
 
 func (us *UserServices) DeleteUser(ctx context.Context, username string) (err error) {
 	if !us.Exists(username) {
-		return errors.New("user not found")
+		return errors.New(config.ErrUserNotFound)
 	}
 
 	if deleteErr := us.Repo.Delete(config.DeleteUserQuery, username); deleteErr != nil {
-		return errors.New("error deleting user. Error: " + deleteErr.Error())
+		return errors.New(config.ErrDeleteUser + deleteErr.Error())
 	}
 	return nil
 }
 
 func (us *UserServices) UpdateUser(ctx context.Context, username string, user models.User) (updated models.User, err error) {
 	if !us.Exists(username) {
-		return models.User{}, errors.New("user not found")
+		return models.User{}, errors.New(config.ErrUserNotFound)
 	}
 
 	if updateErr := us.Repo.Update(config.UpdateUserQuery, username, user); updateErr != nil {
-		return models.User{}, errors.New("error updating user. Error: " + updateErr.Error())
+		return models.User{}, errors.New(config.ErrUpdateUser + updateErr.Error())
 	}
 
 	return user, nil
@@ -83,11 +83,11 @@ func (us *UserServices) UpdateUser(ctx context.Context, username string, user mo
 
 func (us *UserServices) ChangeUserPwd(ctx context.Context, username string, newPassword string) (err error) {
 	if !us.Exists(username) {
-		return errors.New("user not found")
+		return errors.New(config.ErrUserNotFound)
 	}
 
 	if changePwd := us.Repo.ChangePwd(config.ChangeUserPwdQuery, username, newPassword); changePwd != nil {
-		return errors.New("error changing user password. Error: " + changePwd.Error())
+		return errors.New(config.ErrChangePwd + changePwd.Error())
 	}
 
 	return nil
@@ -95,14 +95,14 @@ func (us *UserServices) ChangeUserPwd(ctx context.Context, username string, newP
 
 func paramsValidation(user models.User) error {
 	if user.Name == "" || user.Surname == "" || user.Username == "" || user.Email == "" || user.Password == "" {
-		return fmt.Errorf("all fields are required")
+		return fmt.Errorf(config.ErrAllFieldsAreRequired)
 	}
 	if !validator.ValidatePassword(user.Password) {
-		return fmt.Errorf("invalid password")
+		return fmt.Errorf(config.ErrInvalidPassword)
 	}
 
 	if !validator.ValidateEmail(user.Email) {
-		return fmt.Errorf("invalid email")
+		return fmt.Errorf(config.ErrInvalidPassword)
 	}
 
 	return nil
