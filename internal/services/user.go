@@ -55,10 +55,6 @@ func (us *UserServices) SearchUser(ctx context.Context, username string) (search
 		return models.User{}, errors.New("error searching user. Error: " + searchErr.Error())
 	}
 
-	if search.ID == "" {
-		return models.User{}, errors.New("user not found")
-	}
-
 	return search, nil
 }
 

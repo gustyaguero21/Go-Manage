@@ -35,3 +35,26 @@ func (uh *UserHandler) Create(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, created)
 }
+
+func (uh *UserHandler) Search(ctx *gin.Context) {
+	username := ctx.Param("username")
+
+	if username == "" {
+		web.NewError(ctx, http.StatusBadRequest, "empty query param")
+		return
+	}
+
+	search, searchErr := uh.userService.SearchUser(ctx, username)
+	if searchErr != nil {
+		web.NewError(ctx, http.StatusInternalServerError, searchErr.Error())
+		return
+	}
+
+	if search.ID == "" {
+		web.NewError(ctx, http.StatusOK, "user not found")
+		return
+	}
+
+	ctx.JSON(http.StatusOK, search)
+
+}
