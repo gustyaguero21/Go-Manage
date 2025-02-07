@@ -102,6 +102,29 @@ func (uh *UserHandler) Update(ctx *gin.Context) {
 
 }
 
+func (uh *UserHandler) ChangePwd(ctx *gin.Context) {
+	username := ctx.Param("username")
+
+	if username == "" {
+		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam)
+		return
+	}
+
+	var user models.User
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		web.NewError(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if changeErr := uh.userService.ChangeUserPwd(ctx, username, user.Password); changeErr != nil {
+		web.NewError(ctx, http.StatusInternalServerError, changeErr.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, changePwdResponse(config.SuccessStatus, config.ChangePwdMessage))
+}
+
 func userResponse(status string, message string, user models.User) models.UserResponse {
 	return models.UserResponse{
 		Status:  status,
@@ -112,6 +135,13 @@ func userResponse(status string, message string, user models.User) models.UserRe
 
 func deleteUserResponse(status string, message string) models.DeleteUserResponse {
 	return models.DeleteUserResponse{
+		Status:  status,
+		Message: message,
+	}
+}
+
+func changePwdResponse(status string, message string) models.ChangePwdResponse {
+	return models.ChangePwdResponse{
 		Status:  status,
 		Message: message,
 	}
