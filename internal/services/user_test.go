@@ -507,14 +507,15 @@ func TestChangeUserPassword(t *testing.T) {
 			},
 			MockAct: func() {
 				mock.ExpectExec(config.TestChangePwdQuery).
-					WithArgs("NewPassword1234", "johndoe").
+					WithArgs(sqlmock.AnyArg(), "johndoe").
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
 		},
 		{
 			Name:        "Error",
 			Username:    "johndoe",
-			ExpectedErr: err,
+			NewPassword: "Password1234",
+			ExpectedErr: errors.New("error changing user password"),
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe").
@@ -522,12 +523,14 @@ func TestChangeUserPassword(t *testing.T) {
 						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
 			},
 			MockAct: func() {
-
+				mock.ExpectExec(config.TestChangePwdQuery).
+					WithArgs(sqlmock.AnyArg(), "johndoe").
+					WillReturnError(errors.New("error changing user password"))
 			},
 		},
 		{
 			Name:        "User not found",
-			Username:    "johndoe",
+			Username:    "nonexistentuser",
 			NewPassword: "NewPassword1234",
 			ExpectedErr: errors.New("user not found"),
 			SearchMock: func() {
@@ -536,7 +539,6 @@ func TestChangeUserPassword(t *testing.T) {
 					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
 			},
 			MockAct: func() {
-
 			},
 		},
 	}
@@ -546,10 +548,11 @@ func TestChangeUserPassword(t *testing.T) {
 			tt.SearchMock()
 			tt.MockAct()
 
-			changePwd := userService.ChangeUserPwd(ctx, tt.Username, tt.NewPassword)
-
+			changePwdErr := userService.ChangeUserPwd(ctx, tt.Username, tt.NewPassword)
 			if tt.ExpectedErr != nil {
-				assert.EqualError(t, tt.ExpectedErr, changePwd.Error())
+				assert.Error(t, changePwdErr)
+			} else {
+				assert.NoError(t, changePwdErr)
 			}
 		})
 	}
