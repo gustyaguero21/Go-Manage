@@ -14,3 +14,13 @@ type UserResponse struct {
 	Message string `json:"message"`
 	User    User   `json:"user"`
 }
+
+type DeleteUserResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type UpdateUserResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}

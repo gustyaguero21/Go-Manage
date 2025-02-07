@@ -56,4 +56,6 @@ const (
 	SuccessStatus = "success"
 	CreateMessage = "user created successfully"
 	SearchMessage = "user found successfully"
+	DeleteMessage = "user deleted successfully"
+	UpdateMessage = "user updated successfully"
 )

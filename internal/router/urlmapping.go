@@ -34,4 +34,6 @@ func Urlmapping(r *gin.Engine) {
 
 	api.POST("/create", handler.Create)
 	api.GET("/search/:username", handler.Search)
+	api.DELETE("/delete/:username", handler.Delete)
+	api.PATCH("/update/:username", handler.Update)
 }

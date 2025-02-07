@@ -60,10 +60,59 @@ func (uh *UserHandler) Search(ctx *gin.Context) {
 
 }
 
+func (uh *UserHandler) Delete(ctx *gin.Context) {
+	username := ctx.Param("username")
+
+	if username == "" {
+		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam)
+		return
+	}
+
+	if deleteErr := uh.userService.DeleteUser(ctx, username); deleteErr != nil {
+		web.NewError(ctx, http.StatusInternalServerError, deleteErr.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, deleteUserResponse(config.SuccessStatus, config.DeleteMessage))
+
+}
+
+func (uh *UserHandler) Update(ctx *gin.Context) {
+	username := ctx.Param("username")
+
+	if username == "" {
+		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam)
+		return
+	}
+
+	var user models.User
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		web.NewError(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	update, updateErr := uh.userService.UpdateUser(ctx, username, user)
+	if updateErr != nil {
+		web.NewError(ctx, http.StatusInternalServerError, updateErr.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, userResponse(config.SuccessStatus, config.UpdateMessage, update))
+
+}
+
 func userResponse(status string, message string, user models.User) models.UserResponse {
 	return models.UserResponse{
 		Status:  status,
 		Message: message,
 		User:    user,
+	}
+}
+
+func deleteUserResponse(status string, message string) models.DeleteUserResponse {
+	return models.DeleteUserResponse{
+		Status:  status,
+		Message: message,
 	}
 }
