@@ -5,6 +5,7 @@ import (
 	"go-manage/internal/models"
 	"go-manage/internal/services"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gustyaguero21/go-core/pkg/web"
@@ -30,8 +31,13 @@ func (h *UserHandler) Search(ctx *gin.Context) {
 
 	search, searchErr := h.userService.SearchUser(ctx, username)
 	if searchErr != nil {
-		web.NewError(ctx, http.StatusInternalServerError, searchErr.Error())
-		return
+		if strings.Contains(searchErr.Error(), config.ErrUserNotFound) {
+			web.NewError(ctx, http.StatusNotFound, config.ErrUserNotFound)
+			return
+		} else {
+			web.NewError(ctx, http.StatusInternalServerError, searchErr.Error())
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, searchResponse(config.SuccessStatus, config.SearchMessage, search))
