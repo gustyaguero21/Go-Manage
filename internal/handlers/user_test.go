@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"go-manage/cmd/config"
 	"go-manage/internal/repository"
 	"go-manage/internal/services"
@@ -63,9 +62,16 @@ func TestSearch(t *testing.T) {
 			Username:     "",
 			ExpectedCode: http.StatusBadRequest,
 			MockAct: func() {
+			},
+		},
+		{
+			Name:         "User not found",
+			Username:     "johndoe",
+			ExpectedCode: http.StatusNotFound,
+			MockAct: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
-					WithArgs("").
-					WillReturnError(errors.New(config.ErrEmptyQueryParam))
+					WithArgs("johndoe").
+					WillReturnError(config.ErrUserNotFound)
 			},
 		},
 	}
@@ -82,7 +88,6 @@ func TestSearch(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			assert.Equal(t, tt.ExpectedCode, w.Code)
-
 		})
 	}
 }

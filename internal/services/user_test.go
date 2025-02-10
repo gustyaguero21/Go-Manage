@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"go-manage/cmd/config"
 	"go-manage/internal/models"
 	"go-manage/internal/repository"
@@ -140,7 +138,7 @@ func TestSearchuser(t *testing.T) {
 				Email:    "johndoe@example.com",
 				Password: "Password1234",
 			},
-			ExpectedErr: errors.New(config.ErrUserNotFound),
+			ExpectedErr: config.ErrUserNotFound,
 			MockAct: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("nonexistentuser").
@@ -162,7 +160,7 @@ func TestSearchuser(t *testing.T) {
 			if search.ID != "" {
 				assert.Equal(t, tt.ExpectedResult.ID, search.ID)
 			} else {
-				assert.Error(t, errors.New("user not found"))
+				assert.Error(t, config.ErrUserNotFound)
 			}
 		})
 	}
@@ -241,7 +239,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "johndoe@example.com",
 				Password: "invalid-password",
 			},
-			ExpectedErr: errors.New("invalid password"),
+			ExpectedErr: config.ErrInvalidPassword,
 			SearchMock:  func() {},
 			MockAct: func() {
 			},
@@ -256,7 +254,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "invalid-email",
 				Password: "Password1234",
 			},
-			ExpectedErr: errors.New("invalid email"),
+			ExpectedErr: config.ErrInvalidEmail,
 			SearchMock:  func() {},
 			MockAct: func() {
 			},
@@ -269,12 +267,12 @@ func TestCreateUser(t *testing.T) {
 				Surname:  "Doe",
 				Username: "johndoe",
 			},
-			ExpectedErr: fmt.Errorf("all fields are required"),
+			ExpectedErr: config.ErrAllFieldsAreRequired,
 			SearchMock:  func() {},
 			MockAct: func() {
 				mock.ExpectExec(config.TestSaveQuery).
 					WithArgs().
-					WillReturnError(fmt.Errorf("all fields are required"))
+					WillReturnError(config.ErrAllFieldsAreRequired)
 			},
 		},
 	}
@@ -351,7 +349,7 @@ func TestDeleteUser(t *testing.T) {
 		{
 			Name:        "User not found",
 			Username:    "johndoe",
-			ExpectedErr: errors.New("user not found"),
+			ExpectedErr: config.ErrUserNotFound,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("nonexistentuser").
@@ -360,7 +358,7 @@ func TestDeleteUser(t *testing.T) {
 			MockAct: func() {
 				mock.ExpectExec(config.TestDeleteQuery).
 					WithArgs("johndoe").
-					WillReturnError(errors.New("user not found"))
+					WillReturnError(config.ErrUserNotFound)
 			},
 		},
 	}
@@ -456,7 +454,7 @@ func TestUpdateUser(t *testing.T) {
 			Username:      "johndoe",
 			User:          models.User{},
 			ExpectUpdated: models.User{},
-			ExpectedErr:   errors.New("user not found"),
+			ExpectedErr:   config.ErrUserNotFound,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe").
@@ -465,7 +463,7 @@ func TestUpdateUser(t *testing.T) {
 			MockAct: func() {
 				mock.ExpectExec(config.TestDeleteQuery).
 					WithArgs("johndoe").
-					WillReturnError(errors.New("user not found"))
+					WillReturnError(config.ErrUserNotFound)
 			},
 		},
 	}
@@ -531,7 +529,7 @@ func TestChangeUserPassword(t *testing.T) {
 			Name:        "Error",
 			Username:    "johndoe",
 			NewPassword: "Password1234",
-			ExpectedErr: errors.New("error changing user password"),
+			ExpectedErr: config.ErrChangingPassword,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe").
@@ -541,14 +539,14 @@ func TestChangeUserPassword(t *testing.T) {
 			MockAct: func() {
 				mock.ExpectExec(config.TestChangePwdQuery).
 					WithArgs(sqlmock.AnyArg(), "johndoe").
-					WillReturnError(errors.New("error changing user password"))
+					WillReturnError(config.ErrChangingPassword)
 			},
 		},
 		{
 			Name:        "User not found",
 			Username:    "nonexistentuser",
 			NewPassword: "NewPassword1234",
-			ExpectedErr: errors.New("user not found"),
+			ExpectedErr: config.ErrUserNotFound,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("nonexistentuser").

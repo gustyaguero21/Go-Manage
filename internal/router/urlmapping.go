@@ -15,14 +15,11 @@ func Urlmapping(r *gin.Engine) {
 
 	conn, connErr := data.InitDatabase()
 	if connErr != nil {
-		log.Fatal(connErr)
+		log.Fatal("cannot initialize database. Error: " + connErr.Error())
 	}
 
 	repo := repository.UserRepository{DB: conn}
-	userService := services.UserServices{
-		DB:   conn,
-		Repo: repo,
-	}
+	userService := services.UserServices{DB: conn, Repo: repo}
 
 	handler := handlers.NewUserHandler(userService)
 

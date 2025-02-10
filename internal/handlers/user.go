@@ -25,14 +25,14 @@ func (h *UserHandler) Search(ctx *gin.Context) {
 	username := ctx.Query("username")
 
 	if username == "" {
-		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam)
+		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam.Error())
 		return
 	}
 
 	search, searchErr := h.userService.SearchUser(ctx, username)
 	if searchErr != nil {
-		if strings.Contains(searchErr.Error(), config.ErrUserNotFound) {
-			web.NewError(ctx, http.StatusNotFound, config.ErrUserNotFound)
+		if strings.Contains(searchErr.Error(), config.ErrUserNotFound.Error()) {
+			web.NewError(ctx, http.StatusNotFound, config.ErrUserNotFound.Error())
 			return
 		} else {
 			web.NewError(ctx, http.StatusInternalServerError, searchErr.Error())
@@ -41,6 +41,16 @@ func (h *UserHandler) Search(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, searchResponse(config.SuccessStatus, config.SearchMessage, search))
+
+}
+
+func (h *UserHandler) Create(ctx *gin.Context) {
+	var user models.User
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		web.NewError(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
 
 }
 
