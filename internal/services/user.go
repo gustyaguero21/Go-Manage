@@ -72,16 +72,16 @@ func (us *UserServices) DeleteUser(ctx context.Context, username string) (err er
 	return nil
 }
 
-func (us *UserServices) UpdateUser(ctx context.Context, username string, user models.User) (updated models.User, err error) {
+func (us *UserServices) UpdateUser(ctx context.Context, username string, user models.User) (err error) {
 	if !us.Exists(username) {
-		return models.User{}, config.ErrUserNotFound
+		return config.ErrUserNotFound
 	}
 
 	if updateErr := us.Repo.Update(config.UpdateUserQuery, username, user); updateErr != nil {
-		return models.User{}, errors.New("error updating user. Error: " + updateErr.Error())
+		return errors.New("error updating user. Error: " + updateErr.Error())
 	}
 
-	return user, nil
+	return nil
 }
 
 func (us *UserServices) ChangeUserPwd(ctx context.Context, username string, newPassword string) (err error) {

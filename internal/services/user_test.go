@@ -473,15 +473,12 @@ func TestUpdateUser(t *testing.T) {
 			tt.SearchMock()
 			tt.MockAct()
 
-			updated, updateErr := userService.UpdateUser(ctx, tt.Username, tt.User)
+			updateErr := userService.UpdateUser(ctx, tt.Username, tt.User)
 
 			if tt.ExpectedErr != nil {
 				assert.Equal(t, tt.ExpectedErr, updateErr)
 			}
 
-			if updated.ID != "" {
-				assert.Equal(t, tt.ExpectUpdated.ID, updated.ID)
-			}
 		})
 	}
 }
