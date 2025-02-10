@@ -26,11 +26,12 @@ func (us *UserServices) Exists(username string) bool {
 }
 
 func (us *UserServices) CreateUser(ctx context.Context, user models.User) (created models.User, err error) {
-	if us.Exists(user.Username) {
-		return models.User{}, errors.New("user already exists")
-	}
 	if checkErr := paramsValidation(user); checkErr != nil {
 		return models.User{}, checkErr
+	}
+
+	if us.Exists(user.Username) {
+		return models.User{}, errors.New("user already exists")
 	}
 
 	user.ID = uuid.New().String()

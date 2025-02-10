@@ -32,4 +32,5 @@ func Urlmapping(r *gin.Engine) {
 		ctx.JSON(http.StatusOK, "pong")
 	})
 
+	api.GET("/search", handler.Search)
 }

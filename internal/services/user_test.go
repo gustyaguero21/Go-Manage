@@ -89,6 +89,7 @@ func TestCreateUser(t *testing.T) {
 		Name        string
 		User        models.User
 		ExpectedErr error
+		SearchMock  func()
 		MockAct     func()
 	}{
 		{
@@ -102,6 +103,11 @@ func TestCreateUser(t *testing.T) {
 				Password: "Password1234",
 			},
 			ExpectedErr: nil,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
+			},
 			MockAct: func() {
 				mock.ExpectExec(config.TestSaveQuery).
 					WithArgs().
@@ -119,6 +125,11 @@ func TestCreateUser(t *testing.T) {
 				Password: "Password1234",
 			},
 			ExpectedErr: err,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnError(err)
+			},
 			MockAct: func() {
 			},
 		},
@@ -133,6 +144,7 @@ func TestCreateUser(t *testing.T) {
 				Password: "invalid-password",
 			},
 			ExpectedErr: errors.New("invalid password"),
+			SearchMock:  func() {},
 			MockAct: func() {
 			},
 		},
@@ -147,6 +159,7 @@ func TestCreateUser(t *testing.T) {
 				Password: "Password1234",
 			},
 			ExpectedErr: errors.New("invalid email"),
+			SearchMock:  func() {},
 			MockAct: func() {
 			},
 		},
@@ -159,6 +172,7 @@ func TestCreateUser(t *testing.T) {
 				Username: "johndoe",
 			},
 			ExpectedErr: fmt.Errorf("all fields are required"),
+			SearchMock:  func() {},
 			MockAct: func() {
 				mock.ExpectExec(config.TestSaveQuery).
 					WithArgs().
@@ -169,6 +183,7 @@ func TestCreateUser(t *testing.T) {
 
 	for _, tt := range test {
 		t.Run(tt.Name, func(t *testing.T) {
+			tt.SearchMock()
 			tt.MockAct()
 
 			createdUser, createErr := userService.CreateUser(ctx, tt.User)
@@ -253,6 +268,7 @@ func TestSearchuser(t *testing.T) {
 				Email:    "johndoe@example.com",
 				Password: "Password1234",
 			},
+			ExpectedErr: errors.New(config.ErrUserNotFound),
 			MockAct: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("nonexistentuser").
