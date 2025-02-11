@@ -3,10 +3,13 @@ package main
 import (
 	"go-manage/cmd/config"
 	"go-manage/internal/router"
+	"log"
 )
 
 func main() {
 	router := router.SetupRouter()
 
-	router.Run(config.Port)
+	if err := router.Run(config.Port); err != nil {
+		log.Fatalf("Error al iniciar el servidor: %v", err)
+	}
 }
