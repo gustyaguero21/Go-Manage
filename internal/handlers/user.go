@@ -22,8 +22,9 @@ func NewUserHandler(userService services.UserServices) *UserHandler {
 }
 
 func (h *UserHandler) Search(ctx *gin.Context) {
-	username := ctx.Query("username")
+	ctx.Header("Content-Type", "application/json")
 
+	username := ctx.Query("username")
 	if username == "" {
 		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam.Error())
 		return
@@ -45,6 +46,7 @@ func (h *UserHandler) Search(ctx *gin.Context) {
 }
 
 func (h *UserHandler) Create(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
 	var user models.User
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
@@ -62,6 +64,8 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 }
 
 func (h *UserHandler) Delete(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
 	username := ctx.Query("username")
 	if username == "" {
 		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam.Error())
@@ -77,6 +81,8 @@ func (h *UserHandler) Delete(ctx *gin.Context) {
 }
 
 func (h *UserHandler) Update(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
 	username := ctx.Query("username")
 	if username == "" {
 		web.NewError(ctx, http.StatusBadRequest, config.ErrEmptyQueryParam.Error())
@@ -98,6 +104,8 @@ func (h *UserHandler) Update(ctx *gin.Context) {
 }
 
 func (h *UserHandler) ChangePwd(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
 	username := ctx.Query("username")
 	newPassword := ctx.Query("new_password")
 	if username == "" || newPassword == "" {

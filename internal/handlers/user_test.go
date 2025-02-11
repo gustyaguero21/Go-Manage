@@ -111,23 +111,23 @@ func TestCreate(t *testing.T) {
 	r := gin.Default()
 	r.POST("/create", handler.Create)
 
-	test := []struct {
+	tests := []struct {
 		Name         string
-		User         models.User
+		Body         string
 		ExpectedCode int
 		SearchMock   func()
 		MockAct      func()
 	}{
 		{
 			Name: "Success",
-			User: models.User{
-				ID:       "1",
-				Name:     "John",
-				Surname:  "Doe",
-				Username: "johndoe",
-				Email:    "johndoe@example.com",
-				Password: "Password1234",
-			},
+			Body: `{
+				"id": "1",
+				"name": "John",
+				"surname": "Doe",
+				"username": "johndoe",
+				"email": "johndoe@example.com",
+				"password": "Password1234"
+			}`,
 			ExpectedCode: http.StatusOK,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
@@ -141,35 +141,35 @@ func TestCreate(t *testing.T) {
 			},
 		},
 		{
+			Name:         "Invalid JSON",
+			Body:         `{"id": "1", "name": "John", "surname": "Doe", "username": "johndoe", "email": "johndoe@example.com", "password": }`,
+			ExpectedCode: http.StatusBadRequest,
+			SearchMock:   func() {},
+			MockAct:      func() {},
+		},
+		{
 			Name: "Error",
-			User: models.User{
-				ID:       "1",
-				Name:     "John",
-				Surname:  "Doe",
-				Username: "johndoe",
-				Email:    "johndoe@example.com",
-				Password: "Password1234",
-			},
+			Body: `{
+				"id": "1",
+				"name": "John",
+				"surname": "Doe",
+				"username": "johndoe",
+				"email": "johndoe@example.com",
+				"password": "Password1234"
+			}`,
 			ExpectedCode: http.StatusInternalServerError,
-			SearchMock: func() {
-			},
-			MockAct: func() {
-			},
+			SearchMock:   func() {},
+			MockAct:      func() {},
 		},
 	}
 
-	for _, tt := range test {
+	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			tt.SearchMock()
 			tt.MockAct()
 
-			body, err := json.Marshal(tt.User)
-			if err != nil {
-				t.Fatal("Error marshaling user:", err)
-			}
-
-			req, _ := http.NewRequest(http.MethodPost, "/create", bytes.NewBuffer(body))
-
+			req, _ := http.NewRequest(http.MethodPost, "/create", bytes.NewBufferString(tt.Body))
+			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
