@@ -27,7 +27,7 @@ Clonar el repositorio e instalar las dependencias:
 git clone https://github.com/gustyaguero21/Go-Manage.git
 
 # Entra en el directorio
-cd tu-repo
+cd Go-Manage
 
 # Instala sqlite3
 go get github.com/mattn/go-sqlite3
