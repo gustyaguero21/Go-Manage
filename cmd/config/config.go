@@ -1,5 +1,7 @@
 package config
 
+import "errors"
+
 //Router params
 
 const (
@@ -36,18 +38,14 @@ const (
 
 //Errors
 
-const (
-	ErrAllFieldsAreRequired = "all fields are required"
-	ErrInvalidPassword      = "invalid password"
-	ErrInvalidEmail         = "invalid email"
-	ErrUserAlreadyExists    = "user already exists"
-	ErrSaveUser             = "error creating user. Error: "
-	ErrSearchUser           = "error searching user. Error: "
-	ErrUserNotFound         = "user not found"
-	ErrDeleteUser           = "error deleting user. Error: "
-	ErrUpdateUser           = "error updating user. Error: "
-	ErrChangePwd            = "error changing user password. Error: "
-	ErrEmptyQueryParam      = "empty query param"
+var (
+	ErrAllFieldsAreRequired = errors.New("all fields are required")
+	ErrInvalidPassword      = errors.New("invalid password")
+	ErrInvalidEmail         = errors.New("invalid email")
+	ErrUserAlreadyExists    = errors.New("user already exists")
+	ErrUserNotFound         = errors.New("user not found")
+	ErrEmptyQueryParam      = errors.New("empty query param")
+	ErrChangingPassword     = errors.New("error changing user password")
 )
 
 //Handler messages

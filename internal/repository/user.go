@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 	"go-manage/cmd/config"
 	"go-manage/internal/models"
 )
@@ -35,7 +34,7 @@ func (ur *UserRepository) Search(searchQuery, username string) (models.User, err
 	for rows.Next() {
 		err = rows.Scan(&user.ID, &user.Name, &user.Surname, &user.Username, &user.Email, &user.Password)
 		if err != nil {
-			return models.User{}, fmt.Errorf("user not found")
+			return models.User{}, config.ErrUserNotFound
 		}
 	}
 

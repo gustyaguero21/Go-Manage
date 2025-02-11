@@ -15,14 +15,11 @@ func Urlmapping(r *gin.Engine) {
 
 	conn, connErr := data.InitDatabase()
 	if connErr != nil {
-		log.Fatal(connErr)
+		log.Fatal("cannot initialize database. Error: " + connErr.Error())
 	}
 
 	repo := repository.UserRepository{DB: conn}
-	userService := services.UserServices{
-		DB:   conn,
-		Repo: repo,
-	}
+	userService := services.UserServices{DB: conn, Repo: repo}
 
 	handler := handlers.NewUserHandler(userService)
 
@@ -32,10 +29,9 @@ func Urlmapping(r *gin.Engine) {
 		ctx.JSON(http.StatusOK, "pong")
 	})
 
+	api.GET("/search", handler.Search)
 	api.POST("/create", handler.Create)
-	api.GET("/search/:username", handler.Search)
-	api.DELETE("/delete/:username", handler.Delete)
-	api.PATCH("/update/:username", handler.Update)
-	api.PATCH("/change-password/:username", handler.ChangePwd)
-
+	api.DELETE("/delete", handler.Delete)
+	api.PATCH("/update", handler.Update)
+	api.PATCH("/change-password", handler.ChangePwd)
 }

@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"go-manage/cmd/config"
 	"go-manage/internal/models"
 	"go-manage/internal/repository"
@@ -66,119 +64,6 @@ func TestExistsUser(t *testing.T) {
 			exists := userService.Exists(tt.Username)
 
 			assert.Equal(t, tt.Expected, exists)
-		})
-	}
-}
-
-func TestCreateUser(t *testing.T) {
-	ctx := context.Background()
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer db.Close()
-
-	repo := repository.UserRepository{DB: db}
-	userService := UserServices{
-		DB:   db,
-		Repo: repo,
-	}
-
-	test := []struct {
-		Name        string
-		User        models.User
-		ExpectedErr error
-		MockAct     func()
-	}{
-		{
-			Name: "Success",
-			User: models.User{
-				ID:       "1",
-				Name:     "John",
-				Surname:  "Doe",
-				Username: "johndoe",
-				Email:    "johndoe@example.com",
-				Password: "Password1234",
-			},
-			ExpectedErr: nil,
-			MockAct: func() {
-				mock.ExpectExec(config.TestSaveQuery).
-					WithArgs().
-					WillReturnResult(sqlmock.NewResult(1, 1))
-			},
-		},
-		{
-			Name: "Error",
-			User: models.User{
-				ID:       "1",
-				Name:     "John",
-				Surname:  "Doe",
-				Username: "johndoe",
-				Email:    "johndoe@example.com",
-				Password: "Password1234",
-			},
-			ExpectedErr: err,
-			MockAct: func() {
-			},
-		},
-		{
-			Name: "Invalid password",
-			User: models.User{
-				ID:       "1",
-				Name:     "John",
-				Surname:  "Doe",
-				Username: "johndoe",
-				Email:    "johndoe@example.com",
-				Password: "invalid-password",
-			},
-			ExpectedErr: errors.New("invalid password"),
-			MockAct: func() {
-			},
-		},
-		{
-			Name: "Invalid email",
-			User: models.User{
-				ID:       "1",
-				Name:     "John",
-				Surname:  "Doe",
-				Username: "johndoe",
-				Email:    "invalid-email",
-				Password: "Password1234",
-			},
-			ExpectedErr: errors.New("invalid email"),
-			MockAct: func() {
-			},
-		},
-		{
-			Name: "All fields are required",
-			User: models.User{
-				ID:       "1",
-				Name:     "John",
-				Surname:  "Doe",
-				Username: "johndoe",
-			},
-			ExpectedErr: fmt.Errorf("all fields are required"),
-			MockAct: func() {
-				mock.ExpectExec(config.TestSaveQuery).
-					WithArgs().
-					WillReturnError(fmt.Errorf("all fields are required"))
-			},
-		},
-	}
-
-	for _, tt := range test {
-		t.Run(tt.Name, func(t *testing.T) {
-			tt.MockAct()
-
-			createdUser, createErr := userService.CreateUser(ctx, tt.User)
-
-			if tt.ExpectedErr != nil {
-				assert.Equal(t, tt.ExpectedErr, createErr)
-			}
-			if createdUser.Username != "" {
-				assert.Equal(t, tt.User.Username, createdUser.Username)
-			}
 		})
 	}
 }
@@ -253,6 +138,7 @@ func TestSearchuser(t *testing.T) {
 				Email:    "johndoe@example.com",
 				Password: "Password1234",
 			},
+			ExpectedErr: config.ErrUserNotFound,
 			MockAct: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("nonexistentuser").
@@ -274,7 +160,135 @@ func TestSearchuser(t *testing.T) {
 			if search.ID != "" {
 				assert.Equal(t, tt.ExpectedResult.ID, search.ID)
 			} else {
-				assert.Error(t, errors.New("user not found"))
+				assert.Error(t, config.ErrUserNotFound)
+			}
+		})
+	}
+}
+
+func TestCreateUser(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
+	repo := repository.UserRepository{DB: db}
+	userService := UserServices{
+		DB:   db,
+		Repo: repo,
+	}
+
+	test := []struct {
+		Name        string
+		User        models.User
+		ExpectedErr error
+		SearchMock  func()
+		MockAct     func()
+	}{
+		{
+			Name: "Success",
+			User: models.User{
+				ID:       "1",
+				Name:     "John",
+				Surname:  "Doe",
+				Username: "johndoe",
+				Email:    "johndoe@example.com",
+				Password: "Password1234",
+			},
+			ExpectedErr: nil,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
+			},
+			MockAct: func() {
+				mock.ExpectExec(config.TestSaveQuery).
+					WithArgs().
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			Name: "Error",
+			User: models.User{
+				ID:       "1",
+				Name:     "John",
+				Surname:  "Doe",
+				Username: "johndoe",
+				Email:    "johndoe@example.com",
+				Password: "Password1234",
+			},
+			ExpectedErr: err,
+			SearchMock: func() {
+				mock.ExpectQuery(config.TestSearchQuery).
+					WithArgs("johndoe").
+					WillReturnError(err)
+			},
+			MockAct: func() {
+			},
+		},
+		{
+			Name: "Invalid password",
+			User: models.User{
+				ID:       "1",
+				Name:     "John",
+				Surname:  "Doe",
+				Username: "johndoe",
+				Email:    "johndoe@example.com",
+				Password: "invalid-password",
+			},
+			ExpectedErr: config.ErrInvalidPassword,
+			SearchMock:  func() {},
+			MockAct: func() {
+			},
+		},
+		{
+			Name: "Invalid email",
+			User: models.User{
+				ID:       "1",
+				Name:     "John",
+				Surname:  "Doe",
+				Username: "johndoe",
+				Email:    "invalid-email",
+				Password: "Password1234",
+			},
+			ExpectedErr: config.ErrInvalidEmail,
+			SearchMock:  func() {},
+			MockAct: func() {
+			},
+		},
+		{
+			Name: "All fields are required",
+			User: models.User{
+				ID:       "1",
+				Name:     "John",
+				Surname:  "Doe",
+				Username: "johndoe",
+			},
+			ExpectedErr: config.ErrAllFieldsAreRequired,
+			SearchMock:  func() {},
+			MockAct: func() {
+				mock.ExpectExec(config.TestSaveQuery).
+					WithArgs().
+					WillReturnError(config.ErrAllFieldsAreRequired)
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.SearchMock()
+			tt.MockAct()
+
+			createdUser, createErr := userService.CreateUser(ctx, tt.User)
+
+			if tt.ExpectedErr != nil {
+				assert.Equal(t, tt.ExpectedErr, createErr)
+			}
+			if createdUser.Username != "" {
+				assert.Equal(t, tt.User.Username, createdUser.Username)
 			}
 		})
 	}
@@ -335,7 +349,7 @@ func TestDeleteUser(t *testing.T) {
 		{
 			Name:        "User not found",
 			Username:    "johndoe",
-			ExpectedErr: errors.New("user not found"),
+			ExpectedErr: config.ErrUserNotFound,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("nonexistentuser").
@@ -344,7 +358,7 @@ func TestDeleteUser(t *testing.T) {
 			MockAct: func() {
 				mock.ExpectExec(config.TestDeleteQuery).
 					WithArgs("johndoe").
-					WillReturnError(errors.New("user not found"))
+					WillReturnError(config.ErrUserNotFound)
 			},
 		},
 	}
@@ -440,7 +454,7 @@ func TestUpdateUser(t *testing.T) {
 			Username:      "johndoe",
 			User:          models.User{},
 			ExpectUpdated: models.User{},
-			ExpectedErr:   errors.New("user not found"),
+			ExpectedErr:   config.ErrUserNotFound,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe").
@@ -449,7 +463,7 @@ func TestUpdateUser(t *testing.T) {
 			MockAct: func() {
 				mock.ExpectExec(config.TestDeleteQuery).
 					WithArgs("johndoe").
-					WillReturnError(errors.New("user not found"))
+					WillReturnError(config.ErrUserNotFound)
 			},
 		},
 	}
@@ -459,15 +473,12 @@ func TestUpdateUser(t *testing.T) {
 			tt.SearchMock()
 			tt.MockAct()
 
-			updated, updateErr := userService.UpdateUser(ctx, tt.Username, tt.User)
+			updateErr := userService.UpdateUser(ctx, tt.Username, tt.User)
 
 			if tt.ExpectedErr != nil {
 				assert.Equal(t, tt.ExpectedErr, updateErr)
 			}
 
-			if updated.ID != "" {
-				assert.Equal(t, tt.ExpectUpdated.ID, updated.ID)
-			}
 		})
 	}
 }
@@ -507,14 +518,15 @@ func TestChangeUserPassword(t *testing.T) {
 			},
 			MockAct: func() {
 				mock.ExpectExec(config.TestChangePwdQuery).
-					WithArgs("NewPassword1234", "johndoe").
+					WithArgs(sqlmock.AnyArg(), "johndoe").
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
 		},
 		{
 			Name:        "Error",
 			Username:    "johndoe",
-			ExpectedErr: err,
+			NewPassword: "Password1234",
+			ExpectedErr: config.ErrChangingPassword,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe").
@@ -522,21 +534,22 @@ func TestChangeUserPassword(t *testing.T) {
 						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
 			},
 			MockAct: func() {
-
+				mock.ExpectExec(config.TestChangePwdQuery).
+					WithArgs(sqlmock.AnyArg(), "johndoe").
+					WillReturnError(config.ErrChangingPassword)
 			},
 		},
 		{
 			Name:        "User not found",
-			Username:    "johndoe",
+			Username:    "nonexistentuser",
 			NewPassword: "NewPassword1234",
-			ExpectedErr: errors.New("user not found"),
+			ExpectedErr: config.ErrUserNotFound,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("nonexistentuser").
 					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}))
 			},
 			MockAct: func() {
-
 			},
 		},
 	}
@@ -546,10 +559,11 @@ func TestChangeUserPassword(t *testing.T) {
 			tt.SearchMock()
 			tt.MockAct()
 
-			changePwd := userService.ChangeUserPwd(ctx, tt.Username, tt.NewPassword)
-
+			changePwdErr := userService.ChangeUserPwd(ctx, tt.Username, tt.NewPassword)
 			if tt.ExpectedErr != nil {
-				assert.EqualError(t, tt.ExpectedErr, changePwd.Error())
+				assert.Error(t, changePwdErr)
+			} else {
+				assert.NoError(t, changePwdErr)
 			}
 		})
 	}

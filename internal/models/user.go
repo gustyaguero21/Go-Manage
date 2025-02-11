@@ -9,7 +9,12 @@ type User struct {
 	Password string `json:"password"`
 }
 
-type UserResponse struct {
+type CreateUserResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Created User   `json:"createdß"`
+}
+type SearchResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 	User    User   `json:"user"`
