@@ -53,6 +53,12 @@ Ejecutar las pruebas con mocks:
 go test ./...
 ```
 
+Ejecutar las pruebas y visualizar coverage:
+
+```bash
+go test ./... -cover
+```
+
 ## 📩 Colección de Postman
 
 Puedes importar la colección de Postman desde el siguiente enlace:
