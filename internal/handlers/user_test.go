@@ -2,9 +2,8 @@ package handlers
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"go-manage/cmd/config"
-	"go-manage/internal/models"
 	"go-manage/internal/repository"
 	"go-manage/internal/services"
 	"log"
@@ -195,7 +194,7 @@ func TestDelete(t *testing.T) {
 	r := gin.Default()
 	r.DELETE("/delete", handler.Delete)
 
-	test := []struct {
+	tests := []struct {
 		Name         string
 		Username     string
 		ExpectedCode int
@@ -222,9 +221,8 @@ func TestDelete(t *testing.T) {
 			Name:         "Empty query param",
 			Username:     "",
 			ExpectedCode: http.StatusBadRequest,
-			SearchMock: func() {
-			},
-			MockAct: func() {},
+			SearchMock:   func() {},
+			MockAct:      func() {},
 		},
 		{
 			Name:         "Error",
@@ -237,7 +235,6 @@ func TestDelete(t *testing.T) {
 						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
 			},
 			MockAct: func() {
-
 				mock.ExpectExec(config.TestDeleteQuery).
 					WithArgs("johndoe").
 					WillReturnError(err)
@@ -245,7 +242,7 @@ func TestDelete(t *testing.T) {
 		},
 	}
 
-	for _, tt := range test {
+	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			tt.SearchMock()
 			tt.MockAct()
@@ -279,10 +276,10 @@ func TestUpdate(t *testing.T) {
 	r := gin.Default()
 	r.PATCH("/update", handler.Update)
 
-	test := []struct {
+	tests := []struct {
 		Name         string
 		Username     string
-		Update       models.User
+		Body         string
 		ExpectedCode int
 		SearchMock   func()
 		MockAct      func()
@@ -290,14 +287,14 @@ func TestUpdate(t *testing.T) {
 		{
 			Name:     "Success",
 			Username: "johndoe",
-			Update: models.User{
-				ID:       "1",
-				Name:     "Johncito",
-				Surname:  "Doecito",
-				Username: "johndoe",
-				Email:    "johndoe2024@example.com",
-				Password: "NewPassword1234",
-			},
+			Body: `{
+				"id": "1",
+				"name": "Johncito",
+				"surname": "Doecito",
+				"username": "johndoe",
+				"email": "johndoe2024@example.com",
+				"password": "NewPassword1234"
+			}`,
 			ExpectedCode: http.StatusOK,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
@@ -312,57 +309,55 @@ func TestUpdate(t *testing.T) {
 			},
 		},
 		{
-			Name:     "Error",
-			Username: "johndoe",
-			Update: models.User{
-				ID:       "1",
-				Name:     "Johncito",
-				Surname:  "Doecito",
-				Username: "johndoe",
-				Email:    "johndoe2024@example.com",
-				Password: "NewPassword1234",
-			},
+			Name:         "Empty query param",
+			Username:     "",
+			Body:         `{"name": "Johncito", "surname": "Doecito", "email": "johndoe2024@example.com", "password": "NewPassword1234"}`,
+			ExpectedCode: http.StatusBadRequest,
+			SearchMock:   func() {},
+			MockAct:      func() {},
+		},
+		{
+			Name:         "Invalid JSON",
+			Username:     "johndoe",
+			Body:         `{"name": "Johncito", "surname": "Doecito", "email": "johndoe2024@example.com", "password":}`,
+			ExpectedCode: http.StatusBadRequest,
+			SearchMock:   func() {},
+			MockAct:      func() {},
+		},
+		{
+			Name:         "Error",
+			Username:     "johndoe",
+			Body:         `{"name": "Johncito", "surname": "Doecito", "email": "johndoe2024@example.com", "password": "NewPassword1234"}`,
 			ExpectedCode: http.StatusInternalServerError,
 			SearchMock: func() {
 				mock.ExpectQuery(config.TestSearchQuery).
 					WithArgs("johndoe").
-					WillReturnRows(mock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
-						AddRow("1", "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
+					WillReturnRows(sqlmock.NewRows([]string{"id", "name", "surname", "username", "email", "password"}).
+						AddRow(1, "John", "Doe", "johndoe", "johndoe@example.com", "Password1234"))
 			},
 			MockAct: func() {
+				mock.ExpectExec(config.TestUpdateQuery).
+					WithArgs("Johncito", "Doecito", "johndoe2024@example.com", "johndoe").
+					WillReturnError(errors.New("update error"))
 			},
-		},
-		{
-			Name:         "Empty query param",
-			Username:     "",
-			Update:       models.User{},
-			ExpectedCode: http.StatusBadRequest,
-			SearchMock: func() {
-			},
-			MockAct: func() {},
 		},
 	}
 
-	for _, tt := range test {
+	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			tt.SearchMock()
 			tt.MockAct()
 
-			body, err := json.Marshal(tt.Update)
-			if err != nil {
-				t.Fatal("Error marshaling user:", err)
-			}
-
+			body := bytes.NewBufferString(tt.Body)
 			url := "/update?username=" + tt.Username
-
-			req, _ := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
+			req, _ := http.NewRequest(http.MethodPatch, url, body)
+			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
 
 			assert.Equal(t, tt.ExpectedCode, w.Code)
-
 		})
 	}
 }
